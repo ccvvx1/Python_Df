@@ -24,6 +24,7 @@ from core.cv2ex import *
 from DFLIMG import *
 
 DEBUG = False
+bDebug = False
 
 class ExtractSubprocessor(Subprocessor):
     class Data(object):
@@ -96,13 +97,17 @@ class ExtractSubprocessor(Subprocessor):
                 self.cached_image = ( filepath, image )
 
             h, w, c = image.shape
-
+            if bDebug:
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 0")
             if 'rects' in self.type or self.type == 'all':
                 data = ExtractSubprocessor.Cli.rects_stage (data=data,
                                                             image=image,
                                                             max_faces_from_image=self.max_faces_from_image,
                                                             rects_extractor=self.rects_extractor,
                                                             )
+                if bDebug:                                            
+                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 1")
+                    # print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 1", ExtractSubprocessor.Cli.rects_stage)
 
             if 'landmarks' in self.type or self.type == 'all':
                 data = ExtractSubprocessor.Cli.landmarks_stage (data=data,
@@ -110,7 +115,8 @@ class ExtractSubprocessor(Subprocessor):
                                                                 landmarks_extractor=self.landmarks_extractor,
                                                                 rects_extractor=self.rects_extractor,
                                                                 )
-
+                if bDebug:
+                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 2")
             if self.type == 'final' or self.type == 'all':
                 data = ExtractSubprocessor.Cli.final_stage(data=data,
                                                            image=image,
@@ -120,6 +126,8 @@ class ExtractSubprocessor(Subprocessor):
                                                            output_debug_path=self.output_debug_path,
                                                            final_output_path=self.final_output_path,
                                                            )
+                if bDebug:  
+                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 3")                                                           
             return data
 
         @staticmethod
@@ -144,6 +152,8 @@ class ExtractSubprocessor(Subprocessor):
                         rotated_image = image.swapaxes( 0,1 )[::-1,:,:]
                     rects = data.rects = rects_extractor.extract (rotated_image, is_bgr=True)
                     if len(rects) != 0:
+                        if bDebug:
+                            print("rot : ", rot)
                         data.rects_rotation = rot
                         break
                 if max_faces_from_image is not None and \

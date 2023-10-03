@@ -12,6 +12,7 @@ from core.leras import nn
 """
 ported from https://github.com/1adrianb/face-alignment
 """
+bDebug = False
 class FANExtractor(object):
     def __init__ (self, landmarks_3D=False, place_model_on_cpu=False):
         
@@ -169,6 +170,10 @@ class FANExtractor(object):
         if len(rects) == 0:
             return []
 
+        if bDebug:
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            print("rects: ", rects)
+
         if is_bgr:
             input_image = input_image[:,:,::-1]
             is_bgr = False
@@ -181,6 +186,8 @@ class FANExtractor(object):
 
             center = np.array( [ (left + right) / 2.0, (top + bottom) / 2.0] )
             centers = [ center ]
+            if bDebug:
+                print("centers : ", centers)
 
             if multi_sample:
                 centers += [ center + [-1,-1],
@@ -188,6 +195,8 @@ class FANExtractor(object):
                              center + [1,1],
                              center + [-1,1],
                            ]
+                if bDebug:
+                    print("centers : ", centers)
 
             images = []
             ptss = []
@@ -237,25 +246,91 @@ class FANExtractor(object):
         m[1,1] = resolution / h
         m[0,2] = resolution * ( -center[0] / h + 0.5 )
         m[1,2] = resolution * ( -center[1] / h + 0.5 )
+
+        # if bDebug:
+        #     print("???????????????????????????????????????????????????????")
+        #     print("???????????????????????????????????????????????????????")
+        #     print("???????????????????????????????????????????????????????")
+        #     print("pt : ", pt)
+        #     print("h : ", h)
+        #     print("scale : ", scale)
+        #     print("m : ", m)
+        #     print("resolution : ", resolution)
+        #     print("m[0,0] : ", m[0,0])
+        #     print("m[1,1] : ", m[1,1])
+        #     print("m[0,2] : ", m[0,2])
+        #     print("m[1,2] : ", m[1,2])
+        #     print("m : ", m)
+        #     # print("np.matmul (m, pt)[0:2] : ", np.matmul (m, pt)[0:2])
+        #     # print("np.matmul (m, pt) : ", np.matmul (m, pt))
+        #     print("???????????????????????????????????????????????????????")
+        #     print("???????????????????????????????????????????????????????")
+        
         m = np.linalg.inv(m)
+
+        if bDebug:
+            print("=======================================================")
+            print("???????????????????????????????????????????????????????")
+            print("=======================================================")
+            print("pt : ", pt)
+            print("h : ", h)
+            print("scale : ", scale)
+            print("m : ", m)
+            print("resolution : ", resolution)
+            print("m[0,0] : ", m[0,0])
+            print("m[1,1] : ", m[1,1])
+            print("m[0,2] : ", m[0,2])
+            print("m[1,2] : ", m[1,2])
+            print("m : ", m)
+            # print("np.matmul (m, pt)[0:2] : ", np.matmul (m, pt)[0:2])
+            # print("np.matmul (m, pt) : ", np.matmul (m, pt))
+            print("=======================================================")
+            print("???????????????????????????????????????????????????????")
+            print("=======================================================")
+
         return np.matmul (m, pt)[0:2]
 
     def crop(self, image, center, scale, resolution=256.0):
         ul = self.transform([1, 1], center, scale, resolution).astype( np.int )
+        if bDebug:
+            print("ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul")
+            print("ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul")
+            print("ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul")
+            print("ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul")
+            print("ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul ul")
         br = self.transform([resolution, resolution], center, scale, resolution).astype( np.int )
+        if bDebug:
+            print("ul", ul)
+            print("br", br)
+            print("brbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbrbr")
 
         if image.ndim > 2:
             newDim = np.array([br[1] - ul[1], br[0] - ul[0], image.shape[2]], dtype=np.int32)
+            if bDebug:
+                print("newDim 1 : ", newDim)
             newImg = np.zeros(newDim, dtype=np.uint8)
+            if bDebug:
+                print("newImg 1 : ", newImg)
         else:
             newDim = np.array([br[1] - ul[1], br[0] - ul[0]], dtype=np.int)
             newImg = np.zeros(newDim, dtype=np.uint8)
+            if bDebug:
+                print("newDim 2 : ", newDim)
+                print("newImg 2 : ", newImg)
         ht = image.shape[0]
         wd = image.shape[1]
         newX = np.array([max(1, -ul[0] + 1), min(br[0], wd) - ul[0]], dtype=np.int32)
         newY = np.array([max(1, -ul[1] + 1), min(br[1], ht) - ul[1]], dtype=np.int32)
         oldX = np.array([max(1, ul[0] + 1), min(br[0], wd)], dtype=np.int32)
         oldY = np.array([max(1, ul[1] + 1), min(br[1], ht)], dtype=np.int32)
+        if bDebug:
+            print("image.shape : ", image.shape)
+            print("ht : ", ht)
+            print("wd : ", wd)
+            print("newX : ", newX)
+            print("newY: ", newY)
+            print("oldX: ", oldX)
+            print("oldY: ", oldY)
         newImg[newY[0] - 1:newY[1], newX[0] - 1:newX[1] ] = image[oldY[0] - 1:oldY[1], oldX[0] - 1:oldX[1], :]
 
         newImg = cv2.resize(newImg, dsize=(int(resolution), int(resolution)), interpolation=cv2.INTER_LINEAR)
@@ -276,5 +351,7 @@ class FANExtractor(object):
                 c[i] += np.sign(diff)*0.25
 
         c += 0.5
+        if bDebug:
+            print("pts pts pts pts pts pts pts pts pts pts pts pts pts pts pts pts pts pts pts ")
 
         return np.array( [ self.transform (c[i], center, scale, a_w) for i in range(a_ch) ] )
